@@ -156,34 +156,6 @@ async def get_records(db: Session = Depends(get_db)):
     
     return result
 
-@app.get("/api/records/{record_id}")
-async def get_record(record_id: int, db: Session = Depends(get_db)):
-    """Get a specific record by ID"""
-    from models import Record, PlantRecord, Plant
-    from fastapi import HTTPException
-    
-    record = db.query(Record).filter(Record.id == record_id).first()
-    if not record:
-        raise HTTPException(status_code=404, detail="記録が見つかりません")
-    
-    plants_data = []
-    for plant_record in record.plant_records:
-        plants_data.append({
-            "type": plant_record.plant.id,  # 植物IDを返す
-            "height": float(plant_record.height) if plant_record.height else None,
-            "comment": plant_record.comment or "",
-            "image": f"/api/images/{plant_record.image_filename}" if plant_record.image_filename else None
-        })
-    
-    return {
-        "id": record.id,
-        "date": record.record_date.isoformat(),
-        "createdAt": record.created_at.isoformat(),
-        "weather": record.weather.value,
-        "temperature": float(record.temperature),
-        "plants": plants_data
-    }
-
 @app.get("/api/records/today")
 async def get_today_record(db: Session = Depends(get_db), force_date: str = None):
     """Check if today's record exists"""
@@ -265,6 +237,34 @@ async def get_today_record(db: Session = Depends(get_db), force_date: str = None
     else:
         logger.info(f"今日({today})の記録は存在しません - 新規入力可能")
         return {"exists": False}
+
+@app.get("/api/records/{record_id}")
+async def get_record(record_id: int, db: Session = Depends(get_db)):
+    """Get a specific record by ID"""
+    from models import Record, PlantRecord, Plant
+    from fastapi import HTTPException
+    
+    record = db.query(Record).filter(Record.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="記録が見つかりません")
+    
+    plants_data = []
+    for plant_record in record.plant_records:
+        plants_data.append({
+            "type": plant_record.plant.id,  # 植物IDを返す
+            "height": float(plant_record.height) if plant_record.height else None,
+            "comment": plant_record.comment or "",
+            "image": f"/api/images/{plant_record.image_filename}" if plant_record.image_filename else None
+        })
+    
+    return {
+        "id": record.id,
+        "date": record.record_date.isoformat(),
+        "createdAt": record.created_at.isoformat(),
+        "weather": record.weather.value,
+        "temperature": float(record.temperature),
+        "plants": plants_data
+    }
 
 @app.post("/api/records")
 async def create_record(record_data: dict, db: Session = Depends(get_db)):

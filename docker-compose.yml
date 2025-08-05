@@ -10,6 +10,8 @@ services:
       MYSQL_DATABASE: plant_tracker
       MYSQL_USER: app_user
       MYSQL_PASSWORD: app_password
+      TZ: Asia/Tokyo
+    command: --default-time-zone=+09:00
     ports:
       - "3307:3306"
     volumes:
@@ -59,6 +61,7 @@ services:
       JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: admin123
+      TZ: Asia/Tokyo
     ports:
       - "8000:8000"
     volumes:

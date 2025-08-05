@@ -5,10 +5,6 @@
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold flex-1 text-center">植物成長記録（しょくぶつせいちょうきろく）</h1>
         <div class="flex space-x-2">
-          <!-- テストページリンク -->
-          <NuxtLink to="/test/1" class="text-white text-sm bg-blue-600 px-2 py-1 rounded hover:bg-blue-700">
-            テスト
-          </NuxtLink>
           <!-- デバッグ用リフレッシュボタン -->
           <button @click="forceRefresh" class="text-white text-sm bg-green-700 px-2 py-1 rounded">
             🔄
@@ -26,8 +22,11 @@
 
       <!-- Already Recorded Today -->
       <div v-else-if="todayRecord && !editMode" class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-semibold mb-4 text-center text-green-600">今日（きょう）の記録（きろく）は入力済（にゅうりょくず）みです</h2>
-        
+        <div class="text-center mb-6">
+          <div class="text-4xl mb-2">✅</div>
+          <h2 class="text-lg font-semibold text-green-600">今日（きょう）の記録（きろく）は入力済（にゅうりょくず）みです</h2>
+          <p class="text-sm text-gray-600 mt-2">記録（きろく）の内容（ないよう）を確認（かくにん）できます</p>
+        </div>
         <!-- Today's Record Display -->
         <div class="space-y-4">
           <div class="text-center">
@@ -45,7 +44,7 @@
                  class="border border-gray-200 rounded-lg p-3">
               <div class="flex items-start space-x-3">
                 <div v-if="plant.image" class="flex-shrink-0">
-                  <img :src="plant.image" :alt="plant.type"
+                  <img :src="getImageUrl(plant.image)" :alt="plant.type"
                        class="w-16 h-16 rounded-lg object-cover border border-gray-200">
                 </div>
                 <div class="flex-1">
@@ -65,13 +64,26 @@
             記録時刻（きろくじこく）: {{ formatDateTime(todayRecord.createdAt) }}
           </div>
           
-          <!-- Edit Button -->
-          <div class="mt-6">
+          <!-- Action Buttons -->
+          <div class="mt-6 space-y-3">
+            <div class="text-center text-sm text-gray-600 mb-2">
+              記録（きろく）を変更（へんこう）したい場合は下（した）のボタンを押（お）してください
+            </div>
             <button
               @click="goToEditRecord"
-              class="w-full py-3 px-4 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              class="w-full py-3 px-4 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center space-x-2 shadow-md"
             >
-              編集（へんしゅう）する
+              <span>✏️</span>
+              <span>編集（へんしゅう）する</span>
+            </button>
+            
+            <!-- View Records Button -->
+            <button
+              @click="goToRecords"
+              class="w-full py-2 px-4 rounded-md font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors flex items-center justify-center space-x-2"
+            >
+              <span>📋</span>
+              <span>記録一覧（きろくいちらん）を見る</span>
             </button>
           </div>
         </div>
@@ -121,6 +133,14 @@ import {
 // Composables
 const { apiCall } = useApi()
 const { showSuccess, showError } = useNotification()
+const config = useRuntimeConfig()
+
+// 画像URLを完全なURLに変換する関数
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null
+  if (imagePath.startsWith('http')) return imagePath
+  return `${config.public.apiBase}${imagePath}`
+}
 
 // Reactive data
 const loading = ref(true)
@@ -129,34 +149,22 @@ const editMode = ref(false)
 
 // Check today's record on mount
 const checkTodayRecord = async () => {
-  const jstDate = getJSTDate() // JST日付を取得
-  console.log('今日の記録をチェック中（JST）...', jstDate, new Date().toISOString())
+  console.log('今日の記録をチェック中...', new Date().toISOString())
   
   // 毎回todayRecordを完全にリセット
   todayRecord.value = null
   loading.value = true
   
-  // JST日付を指定してAPIを呼び出し
-  const { data, error } = await apiCall(`/api/records/today?force_date=${jstDate}`)
+  // APIを呼び出し（force_dateパラメータなし）
+  const { data, error } = await apiCall('/api/records/today')
   
   if (error) {
     console.error('今日の記録確認エラー:', error)
     showError(`今日の記録確認に失敗しました: ${error}`)
     todayRecord.value = null
   } else if (data?.exists) {
-    const recordDate = data.record.date
-    console.log('APIから取得した記録:', data.record)
-    console.log('記録の日付:', recordDate, 'JST日付:', jstDate)
-    
-    // 記録の日付がJST日付と一致するかを厳密にチェック
-    if (recordDate === jstDate) {
-      console.log('今日の記録が見つかりました:', data.record)
-      todayRecord.value = data.record
-    } else {
-      console.log('記録の日付が今日と一致しません。新規入力フォームを表示します。')
-      console.log(`記録日付: ${recordDate}, JST日付: ${jstDate}`)
-      todayRecord.value = null
-    }
+    console.log('今日の記録が見つかりました:', data.record)
+    todayRecord.value = data.record
   } else {
     console.log('今日の記録は存在しません。新規入力フォームを表示します。')
     todayRecord.value = null
@@ -169,24 +177,24 @@ const checkTodayRecord = async () => {
 onMounted(() => {
   checkTodayRecord()
   
-  // 日付変更を監視（1分ごとにチェック）- JST対応
+  // 日付変更を監視（1分ごとにチェック）
   const checkDateChange = () => {
-    const currentJSTDate = getJSTDate()
+    const currentDate = new Date().toDateString()
     
     // 前回チェック時の日付と比較
-    if (window.lastCheckedJSTDate && window.lastCheckedJSTDate !== currentJSTDate) {
-      console.log('JST日付が変わりました。記録をリフレッシュします。')
-      console.log(`前回: ${window.lastCheckedJSTDate}, 現在: ${currentJSTDate}`)
+    if (window.lastCheckedDate && window.lastCheckedDate !== currentDate) {
+      console.log('日付が変わりました。記録をリフレッシュします。')
+      console.log(`前回: ${window.lastCheckedDate}, 現在: ${currentDate}`)
       // 状態を完全にリセット
       todayRecord.value = null
       checkTodayRecord()
     }
     
-    window.lastCheckedJSTDate = currentJSTDate
+    window.lastCheckedDate = currentDate
   }
   
   // 初回設定
-  window.lastCheckedJSTDate = getJSTDate()
+  window.lastCheckedDate = new Date().toDateString()
   
   // 1分ごとに日付変更をチェック
   const dateCheckInterval = setInterval(checkDateChange, 60000)
@@ -246,64 +254,36 @@ const goToEditRecord = () => {
   }
 }
 
-// JST（日本標準時）で今日の日付を取得する関数
-const getJSTDate = () => {
-  const now = new Date()
-  // JST = UTC + 9時間
-  const jstOffset = 9 * 60 // 9時間を分に変換
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000) // UTC時刻を取得
-  const jst = new Date(utc + (jstOffset * 60000)) // JST時刻を計算
-  
-  const year = jst.getFullYear()
-  const month = String(jst.getMonth() + 1).padStart(2, '0')
-  const day = String(jst.getDate()).padStart(2, '0')
-  
-  return `${year}-${month}-${day}`
+// Navigate to records list
+const goToRecords = () => {
+  navigateTo('/records')
 }
 
 // 強制リフレッシュ（デバッグ用）
 const forceRefresh = async () => {
-  console.log('=== 強制リフレッシュ開始（JST対応版） ===')
+  console.log('=== 強制リフレッシュ開始 ===')
   
   // 詳細な日付情報を出力
   const now = new Date()
-  console.log('システム時刻 (UTC):', now.toISOString())
-  console.log('システム時刻 (ローカル):', now.toString())
-  console.log('タイムゾーンオフセット:', now.getTimezoneOffset(), '分')
-  
-  // JST時刻を計算
-  const jstDate = getJSTDate()
-  console.log('計算されたJST日付:', jstDate)
-  
-  // 比較用にUTC日付も表示
-  const utcDate = now.toISOString().split('T')[0]
-  console.log('UTC日付:', utcDate)
+  console.log('システム時刻:', now.toISOString())
+  console.log('ローカル時刻:', now.toString())
   
   todayRecord.value = null
   loading.value = true
   
-  // JST日付でAPIを呼び出し
-  console.log('JST日付でAPIを呼び出します:', jstDate)
-  const { data, error } = await apiCall(`/api/records/today?force_date=${jstDate}`)
+  // APIを呼び出し
+  console.log('APIを呼び出します')
+  const { data, error } = await apiCall('/api/records/today')
   
   if (error) {
     console.error('強制リフレッシュエラー:', error)
     showError(`記録確認に失敗しました: ${error}`)
     todayRecord.value = null
   } else if (data?.exists) {
-    const recordDate = data.record.date
-    console.log('APIから取得した記録:', data.record)
-    console.log('記録の日付:', recordDate, 'JST日付:', jstDate)
-    
-    if (recordDate === jstDate) {
-      console.log('日付が一致しました。既存記録を表示します。')
-      todayRecord.value = data.record
-    } else {
-      console.log('日付が一致しません。新規入力フォームを表示します。')
-      todayRecord.value = null
-    }
+    console.log('今日の記録が見つかりました:', data.record)
+    todayRecord.value = data.record
   } else {
-    console.log('JST日付での記録は存在しません - 新規入力フォーム表示')
+    console.log('今日の記録は存在しません - 新規入力フォーム表示')
     todayRecord.value = null
   }
   

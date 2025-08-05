@@ -4,6 +4,14 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 import enum
+from datetime import datetime, timezone, timedelta
+
+# JST時刻を取得する関数
+def get_jst_now():
+    """Get current time in JST"""
+    utc_now = datetime.now(timezone.utc)
+    jst = timezone(timedelta(hours=9))
+    return utc_now.astimezone(jst)
 
 class WeatherEnum(enum.Enum):
     sunny = "sunny"
@@ -17,8 +25,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=get_jst_now)
+    updated_at = Column(DateTime, default=get_jst_now, onupdate=get_jst_now)
 
 class Plant(Base):
     __tablename__ = "plants"
@@ -27,8 +35,8 @@ class Plant(Base):
     name = Column(String(50), nullable=False)
     display_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=get_jst_now)
+    updated_at = Column(DateTime, default=get_jst_now, onupdate=get_jst_now)
     
     # Relationship
     plant_records = relationship("PlantRecord", back_populates="plant")
@@ -40,8 +48,8 @@ class Record(Base):
     record_date = Column(Date, nullable=False, unique=True, index=True)
     weather = Column(Enum(WeatherEnum), nullable=False)
     temperature = Column(DECIMAL(4, 1), nullable=False)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=get_jst_now)
+    updated_at = Column(DateTime, default=get_jst_now, onupdate=get_jst_now)
     
     # Relationship
     plant_records = relationship("PlantRecord", back_populates="record", cascade="all, delete-orphan")
@@ -55,8 +63,8 @@ class PlantRecord(Base):
     height = Column(DECIMAL(5, 1))
     image_filename = Column(String(255))
     comment = Column(Text)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=get_jst_now)
+    updated_at = Column(DateTime, default=get_jst_now, onupdate=get_jst_now)
     
     # Relationships
     record = relationship("Record", back_populates="plant_records")
