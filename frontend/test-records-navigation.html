@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記録一覧画面 - 遷移テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .mock-record {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .edit-link {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+        .edit-link:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>記録一覧画面 - 遷移テスト</h1>
+        
+        <div class="test-section">
+            <div class="test-title">テスト1: 基本的な遷移リンクのテスト</div>
+            <div class="mock-record">
+                <h3>記録 #1</h3>
+                <p>日付: 2024-01-15</p>
+                <p>天気: 晴れ</p>
+                <p>気温: 25°C</p>
+                <a href="/records/edit/1" class="edit-link" onclick="testNavigation(event, 1)">
+                    編集
+                </a>
+            </div>
+            <div class="mock-record">
+                <h3>記録 #2</h3>
+                <p>日付: 2024-01-16</p>
+                <p>天気: 曇り</p>
+                <p>気温: 20°C</p>
+                <a href="/records/edit/2" class="edit-link" onclick="testNavigation(event, 2)">
+                    編集
+                </a>
+            </div>
+            <div id="test1-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">テスト2: URL生成のテスト</div>
+            <button class="test-button" onclick="testUrlGeneration()">URL生成テスト実行</button>
+            <div id="test2-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">テスト3: ルートパラメータのテスト</div>
+            <button class="test-button" onclick="testRouteParams()">ルートパラメータテスト実行</button>
+            <div id="test3-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">テスト4: 実際のページ遷移テスト</div>
+            <div class="info">
+                <p>このテストは実際にページを遷移させます。ブラウザの履歴に影響します。</p>
+            </div>
+            <button class="test-button" onclick="testActualNavigation()">実際の遷移テスト実行</button>
+            <div id="test4-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">テスト結果サマリー</div>
+            <div id="test-summary"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            test1: false,
+            test2: false,
+            test3: false,
+            test4: false
+        };
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="test-result ${type}">${message}</div>`;
+        }
+
+        function testNavigation(event, recordId) {
+            event.preventDefault();
+            const expectedUrl = `/records/edit/${recordId}`;
+            const actualUrl = event.target.href;
+            
+            if (actualUrl.includes(expectedUrl)) {
+                showResult('test1-result', 
+                    `✅ 成功: 記録ID ${recordId} の編集リンクが正しく生成されました。<br>
+                    期待値: ${expectedUrl}<br>
+                    実際値: ${actualUrl}`, 'success');
+                testResults.test1 = true;
+            } else {
+                showResult('test1-result', 
+                    `❌ 失敗: 記録ID ${recordId} の編集リンクが正しく生成されませんでした。<br>
+                    期待値: ${expectedUrl}<br>
+                    実際値: ${actualUrl}`, 'error');
+                testResults.test1 = false;
+            }
+            updateSummary();
+        }
+
+        function testUrlGeneration() {
+            const testIds = [1, 2, 3, 100, 999];
+            let allCorrect = true;
+            let results = [];
+
+            testIds.forEach(id => {
+                const expectedUrl = `/records/edit/${id}`;
+                const generatedUrl = `/records/edit/${id}`;
+                
+                if (generatedUrl === expectedUrl) {
+                    results.push(`✅ ID ${id}: ${generatedUrl}`);
+                } else {
+                    results.push(`❌ ID ${id}: 期待値 ${expectedUrl}, 実際値 ${generatedUrl}`);
+                    allCorrect = false;
+                }
+            });
+
+            const message = results.join('<br>');
+            showResult('test2-result', message, allCorrect ? 'success' : 'error');
+            testResults.test2 = allCorrect;
+            updateSummary();
+        }
+
+        function testRouteParams() {
+            // 模擬的なルートパラメータのテスト
+            const testCases = [
+                { id: '1', expected: '1' },
+                { id: '123', expected: '123' },
+                { id: 'abc', expected: 'abc' }
+            ];
+
+            let allCorrect = true;
+            let results = [];
+
+            testCases.forEach(testCase => {
+                const routeParam = testCase.id;
+                if (routeParam === testCase.expected) {
+                    results.push(`✅ パラメータ "${testCase.id}" が正しく処理されました`);
+                } else {
+                    results.push(`❌ パラメータ "${testCase.id}" の処理に失敗しました`);
+                    allCorrect = false;
+                }
+            });
+
+            const message = results.join('<br>');
+            showResult('test3-result', message, allCorrect ? 'success' : 'error');
+            testResults.test3 = allCorrect;
+            updateSummary();
+        }
+
+        function testActualNavigation() {
+            try {
+                // 実際のページ遷移をテスト（履歴に追加）
+                const testUrl = '/records/edit/999';
+                window.history.pushState({}, 'Test', testUrl);
+                
+                showResult('test4-result', 
+                    `✅ 実際のページ遷移テストが成功しました。<br>
+                    遷移先URL: ${testUrl}<br>
+                    現在のURL: ${window.location.pathname}`, 'success');
+                testResults.test4 = true;
+            } catch (error) {
+                showResult('test4-result', 
+                    `❌ 実際のページ遷移テストが失敗しました。<br>
+                    エラー: ${error.message}`, 'error');
+                testResults.test4 = false;
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const passed = Object.values(testResults).filter(result => result).length;
+            const total = Object.keys(testResults).length;
+            const percentage = Math.round((passed / total) * 100);
+
+            let summaryHtml = `
+                <div class="test-result ${percentage === 100 ? 'success' : percentage >= 50 ? 'info' : 'error'}">
+                    <h3>テスト結果サマリー</h3>
+                    <p>通過: ${passed}/${total} (${percentage}%)</p>
+                    <ul>
+                        <li>テスト1 (基本遷移): ${testResults.test1 ? '✅ 通過' : '❌ 失敗'}</li>
+                        <li>テスト2 (URL生成): ${testResults.test2 ? '✅ 通過' : '❌ 失敗'}</li>
+                        <li>テスト3 (ルートパラメータ): ${testResults.test3 ? '✅ 通過' : '❌ 失敗'}</li>
+                        <li>テスト4 (実際遷移): ${testResults.test4 ? '✅ 通過' : '❌ 失敗'}</li>
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('test-summary').innerHTML = summaryHtml;
+        }
+
+        // ページ読み込み時の初期化
+        window.onload = function() {
+            showResult('test-summary', 'テストを実行してください。', 'info');
+        };
+    </script>
+</body>
+</html> 

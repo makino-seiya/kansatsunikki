@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for mobile-first design */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tab navigation styles */
+.tab-navigation {
+  @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50;
+}
+
+.tab-item {
+  @apply flex-1 py-2 px-1 text-center text-xs no-underline block;
+  transition: color 0.2s ease;
+}
+
+.tab-item.active {
+  @apply text-blue-600;
+}
+
+.tab-item.inactive {
+  @apply text-gray-500;
+}
+
+.tab-item:hover {
+  @apply text-blue-500;
+}
+
+/* Router link active state */
+.router-link-active {
+  @apply text-blue-600;
+}
+
+.router-link-exact-active {
+  @apply text-blue-600;
+}

@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  database:
+    image: mysql:8.0
+    container_name: plant-tracker-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: plant_tracker
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - plant-tracker-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: plant-tracker-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9002:9000"  # API
+      - "9003:9001"  # Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - plant-tracker-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: plant-tracker-backend
+    environment:
+      DATABASE_URL: mysql+pymysql://app_user:app_password@database:3306/plant_tracker
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET_NAME: plant-images
+      BASIC_AUTH_USERNAME: plant_user
+      BASIC_AUTH_PASSWORD: plant_pass123
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - plant-tracker-network
+    depends_on:
+      database:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Nuxt Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: plant-tracker-frontend
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:8000
+      NUXT_PUBLIC_BASIC_AUTH_USERNAME: plant_user
+      NUXT_PUBLIC_BASIC_AUTH_PASSWORD: plant_pass123
+      NODE_ENV: development
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_cache:/app/.nuxt
+    networks:
+      - plant-tracker-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mysql_data:
+  minio_data:
+  frontend_cache:
+
+networks:
+  plant-tracker-network:
+    driver: bridge
