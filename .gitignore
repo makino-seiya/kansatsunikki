@@ -2,12 +2,16 @@
 .env
 .env.local
 .env.production
+.serena.env
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.venv/
+venv/
+backend/venv/
 .Python
 build/
 develop-eggs/
@@ -61,3 +65,5 @@ logs/
 
 # Uploads
 uploads/
+.serena/
+data/

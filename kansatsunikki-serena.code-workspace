@@ -1,0 +1,43 @@
+{
+  "name": "kansatsunikki - serena",
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    "files.exclude": {
+      "backend/venv": true,
+      "**/__pycache__": true,
+      "frontend/node_modules": true,
+      "frontend/.nuxt": true,
+      ".idea": true
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/bin/python",
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true
+    },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "vue",
+      "typescript",
+      "typescriptreact"
+    ],
+    "prettier.requireConfig": false,
+    "files.associations": {
+      "*.vue": "vue"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "vue.volar",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}
