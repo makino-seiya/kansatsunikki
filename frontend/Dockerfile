@@ -1,15 +1,18 @@
-FROM node:18-alpine
+FROM node:20.19-bullseye
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Update npm to v11 to avoid optional deps bug and install dependencies deterministically
+RUN npm install -g npm@11 \
+  && npm --version \
+  && npm ci --ignore-scripts
 
-# Copy application code
+# Copy application code and run project prepare (postinstall)
 COPY . .
+RUN npm run postinstall
 
 # Expose port
 EXPOSE 3000
