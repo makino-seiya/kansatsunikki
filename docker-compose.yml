@@ -102,6 +102,25 @@ services:
       retries: 3
       start_period: 40s
 
+  # phpMyAdmin (MySQL 管理ツール)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5
+    container_name: plant-tracker-phpmyadmin
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      PMA_USER: app_user
+      PMA_PASSWORD: app_password
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    networks:
+      - plant-tracker-network
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:1.27-alpine
