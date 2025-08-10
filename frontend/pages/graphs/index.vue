@@ -133,11 +133,24 @@ const fetchRecords = async () => {
 
 // Process data for charts
 const processChartData = () => {
-  const normalize = (name) => getPlantName(name)
+  // 値を統一表記へ正規化（数値ID、英語名、別表記も吸収）
+  const normalizePlant = (value) => {
+    if (value === null || value === undefined) return ''
+    const raw = String(value).trim()
+    // 数値ID対応
+    if (raw === '1') return '向日葵（ひまわり）'
+    if (raw === '2') return '秋桜（コスモス）'
+    if (raw === '3') return '朝顔（あさがお）'
+    // 括弧の半角→全角揺れを吸収
+    const unified = raw
+      .replace(/\(/g, '（')
+      .replace(/\)/g, '）')
+    return getPlantName(unified)
+  }
 
   const filteredRecords = selectedPlant.value 
     ? records.value.filter(record => 
-        record.plants.some(plant => normalize(plant.type) === normalize(selectedPlant.value))
+        record.plants && record.plants.some(plant => normalizePlant(plant.type) === normalizePlant(selectedPlant.value))
       )
     : records.value
 
@@ -147,10 +160,10 @@ const processChartData = () => {
   })
 
   const plantTypes = selectedPlant.value 
-    ? [normalize(selectedPlant.value)] 
+    ? [normalizePlant(selectedPlant.value)] 
     : (() => {
         const seen = new Set(
-          filteredRecords.flatMap(r => r.plants.map(p => normalize(p.type))).filter(Boolean)
+          (filteredRecords || []).flatMap(r => (r.plants || []).map(p => normalizePlant(p.type))).filter(Boolean)
         )
         const order = ['向日葵（ひまわり）', '秋桜（コスモス）', '朝顔（あさがお）']
         const inOrder = order.filter(t => seen.has(t))
@@ -166,23 +179,29 @@ const processChartData = () => {
 
   const heightDatasets = plantTypes.map(plantType => {
     const data = filteredRecords.map(record => {
-      const plant = record.plants.find(p => normalize(p.type) === plantType)
+      const plant = (record.plants || []).find(p => normalizePlant(p.type) === plantType)
       if (!plant || plant.height === null || plant.height === undefined) return null
-      const numeric = Number(plant.height)
+      const numeric = parseFloat(String(plant.height).toString().replace(/[^0-9.+-]/g, ''))
       return Number.isFinite(numeric) ? numeric : null
     })
     
+    const color = plantColors[plantType] || '#94a3b8'
     return {
       label: getPlantName(plantType),
-      data: data,
-      borderColor: plantColors[plantType],
-      backgroundColor: plantColors[plantType] + '20',
+      data,
+      borderColor: color,
+      backgroundColor: color + '20',
       tension: 0.1,
-      spanGaps: true
+      spanGaps: true,
+      pointRadius: 4,
+      pointHoverRadius: 6
     }
   })
 
-  const temperatureData = filteredRecords.map(record => record.temperature)
+  const temperatureData = filteredRecords.map(record => {
+    const n = parseFloat(record.temperature)
+    return Number.isFinite(n) ? n : null
+  })
 
   return {
     labels,
