@@ -1,6 +1,8 @@
 // API呼び出しとエラーハンドリングの共通化
 export const useApi = () => {
   const config = useRuntimeConfig()
+  // normalize base to avoid double slashes
+  const base = (config.public.apiBase || '').replace(/\/+$/, '')
   
   // 統一されたエラーハンドリング
   const handleApiError = (error) => {
@@ -43,7 +45,18 @@ export const useApi = () => {
   // 統一されたAPI呼び出し関数
   const apiCall = async (url, options = {}) => {
     try {
-      const response = await $fetch(`${config.public.apiBase}${url}`, {
+      // 与えられたurlを正規化し、`/api` の二重付与を防止
+      const raw = `${url}`
+      // 先頭スラッシュ付与
+      let path = raw.startsWith('/') ? raw : `/${raw}`
+      // 連続スラッシュを1つに
+      path = path.replace(/\/+/, '/').replace(/\/\/+/, '/')
+      // base が `/api` で、path が `/api/...` の場合は重複を除去
+      if (base.endsWith('/api') && path.startsWith('/api/')) {
+        path = path.replace(/^\/api/, '')
+      }
+
+      const response = await $fetch(`${base}${path}`, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +75,7 @@ export const useApi = () => {
       const formData = new FormData()
       formData.append('file', file)
       
-      const response = await $fetch(`${config.public.apiBase}/upload/image`, {
+      const response = await $fetch(`${base}/upload/image`, {
         method: 'POST',
         body: formData
       })
