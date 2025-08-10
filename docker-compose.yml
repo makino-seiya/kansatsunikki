@@ -85,12 +85,10 @@ services:
       NUXT_PUBLIC_API_BASE: /api
       NUXT_PUBLIC_BASIC_AUTH_USERNAME: plant_user
       NUXT_PUBLIC_BASIC_AUTH_PASSWORD: plant_pass123
-      NODE_ENV: development
+      NODE_ENV: production
     ports:
       - "3001:3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
       - ./data/frontend_cache:/app/.nuxt
     networks:
       - plant-tracker-network

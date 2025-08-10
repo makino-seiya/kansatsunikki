@@ -1,4 +1,4 @@
-FROM node:20.19-bullseye
+FROM node:20.19-bullseye as builder
 
 WORKDIR /app
 
@@ -12,10 +12,17 @@ RUN npm install -g npm@11 \
 
 # Copy application code and run project prepare (postinstall)
 COPY . .
-RUN npm run postinstall
+RUN npm run postinstall \
+  && npm run build
 
-# Expose port
+FROM node:20.19-bullseye as runner
+WORKDIR /app
+
+# Copy only built output and minimal runtime files
+COPY --from=builder /app/.output /app/.output
+COPY --from=builder /app/package*.json /app/
+
+ENV NODE_ENV=production
 EXPOSE 3000
 
-# Start development server with proper host binding
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["node", ".output/server/index.mjs"]
