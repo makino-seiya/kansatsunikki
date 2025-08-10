@@ -1,8 +1,10 @@
 // API呼び出しとエラーハンドリングの共通化
 export const useApi = () => {
   const config = useRuntimeConfig()
-  // normalize base to avoid double slashes
-  const base = (config.public.apiBase || '').replace(/\/+$/, '')
+  // normalize base to avoid double slashes and repeated /api
+  let base = (config.public.apiBase || '').replace(/\/+$/, '')
+  // collapse trailing repeated /api segments (e.g. "/api/api" -> "/api")
+  base = base.replace(/(?:\/api)+$/, '/api')
   
   // 統一されたエラーハンドリング
   const handleApiError = (error) => {
@@ -47,16 +49,47 @@ export const useApi = () => {
     try {
       // 与えられたurlを正規化し、`/api` の二重付与を防止
       const raw = `${url}`
-      // 先頭スラッシュ付与
-      let path = raw.startsWith('/') ? raw : `/${raw}`
-      // 連続スラッシュを1つに
-      path = path.replace(/\/+/, '/').replace(/\/\/+/, '/')
-      // base が `/api` で、path が `/api/...` の場合は重複を除去
-      if (base.endsWith('/api') && path.startsWith('/api/')) {
-        path = path.replace(/^\/api/, '')
+      // 絶対URLはそのまま呼び出す
+      if (/^https?:\/\//i.test(raw)) {
+        const response = await $fetch(raw, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        })
+        return { data: response, error: null }
       }
 
-      const response = await $fetch(`${base}${path}`, {
+      // 先頭スラッシュ付与
+      let path = raw.startsWith('/') ? raw : `/${raw}`
+      // 連続スラッシュを1つに（パス部分のみ）
+      path = path.replace(/\/{2,}/g, '/')
+      // パス先頭の "/api" をすべて取り除く（base 側で付与済みのため）
+      path = path.replace(/^\/(?:api)(?=\/|$)/, '')
+      while (path.startsWith('/api/')) {
+        path = path.replace(/^\/api\//, '/')
+      }
+      // 再度、先頭スラッシュを保証
+      if (!path.startsWith('/')) {
+        path = `/${path}`
+      }
+      // base が空の場合はデフォルトで /api を使用
+      if (!base) {
+        base = '/api'
+      }
+
+      // 結合し、/api の重複を安全に縮約
+      let finalUrl = `${base}${path}`
+      finalUrl = finalUrl.replace(/(\/api){2,}/g, '/api')
+
+      // 開発時のデバッグログ（ブラウザのみ）
+      if (typeof window !== 'undefined' && !(process && process.env && process.env.NODE_ENV === 'production')) {
+        // eslint-disable-next-line no-console
+        console.debug('[useApi] request', { base, raw, path, finalUrl })
+      }
+
+      const response = await $fetch(finalUrl, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
