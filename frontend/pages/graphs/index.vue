@@ -42,7 +42,7 @@
         <!-- Height Chart -->
         <div class="bg-white rounded-lg shadow p-4 mb-4">
           <h3 class="text-lg font-semibold mb-4">高さの推移</h3>
-          <div class="h-64">
+          <div class="h-64 relative">
             <canvas ref="heightChart"></canvas>
           </div>
         </div>
@@ -50,7 +50,7 @@
         <!-- Temperature Chart -->
         <div class="bg-white rounded-lg shadow p-4 mb-4">
           <h3 class="text-lg font-semibold mb-4">気温の推移</h3>
-          <div class="h-64">
+          <div class="h-64 relative">
             <canvas ref="temperatureChart"></canvas>
           </div>
         </div>
@@ -58,7 +58,7 @@
         <!-- Combined Chart -->
         <div class="bg-white rounded-lg shadow p-4">
           <h3 class="text-lg font-semibold mb-4">高さと気温の関係</h3>
-          <div class="h-64">
+          <div class="h-64 relative">
             <canvas ref="combinedChart"></canvas>
           </div>
         </div>
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { useApi } from '~/composables/useApi'
 import { useNotification } from '~/composables/useNotification'
@@ -154,7 +154,9 @@ const processChartData = () => {
   const heightDatasets = plantTypes.map(plantType => {
     const data = filteredRecords.map(record => {
       const plant = record.plants.find(p => p.type === plantType)
-      return plant ? plant.height : null
+      if (!plant || plant.height === null || plant.height === undefined) return null
+      const numeric = Number(plant.height)
+      return Number.isFinite(numeric) ? numeric : null
     })
     
     return {
