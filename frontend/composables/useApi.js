@@ -62,7 +62,7 @@ export const useApi = () => {
       const formData = new FormData()
       formData.append('file', file)
       
-      const response = await $fetch(`${config.public.apiBase}/api/upload/image`, {
+      const response = await $fetch(`${config.public.apiBase}/upload/image`, {
         method: 'POST',
         body: formData
       })

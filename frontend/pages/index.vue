@@ -139,6 +139,7 @@ const config = useRuntimeConfig()
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null
   if (imagePath.startsWith('http')) return imagePath
+  if (imagePath.startsWith('/')) return imagePath
   return `${config.public.apiBase}${imagePath}`
 }
 
@@ -156,7 +157,7 @@ const checkTodayRecord = async () => {
   loading.value = true
   
   // APIを呼び出し（force_dateパラメータなし）
-  const { data, error } = await apiCall('/api/records/today')
+  const { data, error } = await apiCall('/records/today')
   
   if (error) {
     console.error('今日の記録確認エラー:', error)
@@ -225,7 +226,7 @@ const currentDate = computed(() => formatCurrentDate())
 const handleSubmit = async ({ data, isEditMode, recordId }) => {
   try {
     // Call API for new record creation
-    const { data: responseData, error } = await apiCall('/api/records', {
+  const { data: responseData, error } = await apiCall('/records', {
       method: 'POST',
       body: data
     })
@@ -273,7 +274,7 @@ const forceRefresh = async () => {
   
   // APIを呼び出し
   console.log('APIを呼び出します')
-  const { data, error } = await apiCall('/api/records/today')
+  const { data, error } = await apiCall('/records/today')
   
   if (error) {
     console.error('強制リフレッシュエラー:', error)

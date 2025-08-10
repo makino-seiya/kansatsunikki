@@ -246,6 +246,7 @@ const config = useRuntimeConfig()
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null
   if (imagePath.startsWith('http')) return imagePath
+  if (imagePath.startsWith('/')) return imagePath
   return `${config.public.apiBase}${imagePath}`
 }
 

@@ -156,7 +156,7 @@ const fetchRecords = async () => {
     loading.value = true
     error.value = null
     
-    const { data, error: apiError } = await apiCall('/api/records')
+    const { data, error: apiError } = await apiCall('/records')
     
     if (apiError) {
       throw new Error(apiError)
@@ -183,6 +183,7 @@ const config = useRuntimeConfig()
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null
   if (imagePath.startsWith('http')) return imagePath
+  if (imagePath.startsWith('/')) return imagePath
   return `${config.public.apiBase}${imagePath}`
 }
 const handleImageError = (event) => {

@@ -118,7 +118,7 @@ let combinedChartInstance = null
 // Fetch records from API
 const fetchRecords = async () => {
   loading.value = true
-  const { data, error: apiError } = await apiCall('/api/records')
+  const { data, error: apiError } = await apiCall('/records')
   
   if (apiError) {
     error.value = `データの取得に失敗しました: ${apiError}`

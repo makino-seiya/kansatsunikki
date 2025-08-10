@@ -103,7 +103,7 @@ const fetchRecord = async () => {
     loading.value = true
     error.value = null
     
-    const { data, error: apiError } = await apiCall(`/api/records/${recordId.value}`)
+    const { data, error: apiError } = await apiCall(`/records/${recordId.value}`)
     
     if (apiError) {
       throw new Error(apiError)
@@ -121,7 +121,7 @@ const fetchRecord = async () => {
 // Handle form submit
 const handleSubmit = async ({ data, isEditMode, recordId }) => {
   try {
-    const { data: responseData, error: apiError } = await apiCall(`/api/records/${recordId}`, {
+    const { data: responseData, error: apiError } = await apiCall(`/records/${recordId}`, {
       method: 'PUT',
       body: data
     })
