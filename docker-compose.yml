@@ -82,12 +82,12 @@ services:
       dockerfile: Dockerfile
     container_name: plant-tracker-frontend
     environment:
-      NUXT_PUBLIC_API_BASE: http://kansatsu.astra-bc.co.jp:8000
+      NUXT_PUBLIC_API_BASE: /api
       NUXT_PUBLIC_BASIC_AUTH_USERNAME: plant_user
       NUXT_PUBLIC_BASIC_AUTH_PASSWORD: plant_pass123
       NODE_ENV: development
     ports:
-      - "80:3000"
+      - "3001:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -103,6 +103,21 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: plant-tracker-nginx
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    networks:
+      - plant-tracker-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
 networks:
   plant-tracker-network:
     driver: bridge
