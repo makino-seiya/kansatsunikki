@@ -30,9 +30,9 @@ export default defineNuxtConfig({
     '/records/**': { prerender: false },
     '/test/**': { prerender: false }
   },
-  // DevToolsの設定
+  // DevToolsの設定（本番は無効化）
   devtools: {
-    enabled: true
+    enabled: process.env.NODE_ENV !== 'production'
   },
   // 開発サーバーの設定
   devServer: {
