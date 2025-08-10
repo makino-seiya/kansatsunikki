@@ -84,7 +84,8 @@ export const useApi = () => {
       finalUrl = finalUrl.replace(/(\/api){2,}/g, '/api')
 
       // 開発時のデバッグログ（ブラウザのみ）
-      if (typeof window !== 'undefined' && !(process && process.env && process.env.NODE_ENV === 'production')) {
+      const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV
+      if (typeof window !== 'undefined' && isDev) {
         // eslint-disable-next-line no-console
         console.debug('[useApi] request', { base, raw, path, finalUrl })
       }
