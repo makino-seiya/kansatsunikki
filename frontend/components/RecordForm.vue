@@ -119,7 +119,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">写真（しゃしん）</label>
           
           <!-- 既存画像の表示（編集モード時） -->
-          <div v-if="isEditMode && form.plantRecords[plant.id].existingImage" class="mb-2">
+          <div v-if="isEditMode && form.plantRecords[plant.id].existingImage && !form.plantRecords[plant.id].imagePreview" class="mb-2">
             <div class="relative">
               <img
                 :src="getImageUrl(form.plantRecords[plant.id].existingImage)"
@@ -322,6 +322,8 @@ const handleImageUpload = (event, plantId) => {
   reader.onload = (e) => {
     form.value.plantRecords[plantId].imagePreview = e.target.result
     form.value.plantRecords[plantId].image = file
+    // 新しい画像を選択したら既存画像は非表示にする
+    form.value.plantRecords[plantId].existingImage = null
   }
   reader.readAsDataURL(file)
 }
